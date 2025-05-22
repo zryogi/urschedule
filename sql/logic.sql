@@ -74,3 +74,36 @@ INSERT INTO user_events (user_id, event_id, is_mandatory, rsvp_status)
 VALUES (3, 10, TRUE, 'accepted'); -- Esto lanzará error.
 
 
+
+
+
+-- #2: Trigger para agendamientos con fecha (u hora) posterior.
+
+CREATE OR REPLACE FUNCTION f_fecha_posterior()
+RETURNS TRIGGER AS $$
+DECLARE
+	v_rol TEXT;
+BEGIN
+	-- 1. Valida que la fecha de inicio del evento no sea en el pasado
+	IF NEW.start_datetime < NOW() THEN
+        RAISE EXCEPTION 'No se puede crear o actualizar un evento con fecha/hora de inicio en el pasado: %', NEW.start_datetime;
+    END IF;
+
+    -- 2. Validar que la fecha de fin no sea en el pasado (Si el evento termina antes de la hora actual, no se permite)
+    IF NEW.end_datetime < NOW() THEN
+        RAISE EXCEPTION 'No se puede crear o actualizar un evento que ya ha terminado: %', NEW.end_datetime;
+    END IF;
+
+    -- 3. Validar que la fecha y hora de fin sea posterior a la de inicio
+    IF NEW.end_datetime <= NEW.start_datetime THEN
+        RAISE EXCEPTION 'La fecha y hora de fin debe ser posterior a la de inicio. Inicio: %, Fin: %', NEW.start_datetime, NEW.end_datetime;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER tri_fecha_posterior
+BEFORE INSERT OR UPDATE ON events
+FOR EACH ROW EXECUTE FUNCTION f_fecha_posterior();
