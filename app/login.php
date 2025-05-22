@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body>
+<body class="login-page">
     <div class="login-container">
         <h2 class="text-center mb-4">UR Planner Login</h2>
         <?php if (isset($_GET['error'])) { ?>
