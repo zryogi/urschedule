@@ -37,7 +37,9 @@ services:
 
   # PHP Application Service (with Apache)
   app:
-    image: php:8.3-apache
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
     container_name: my_php_app
     restart: unless-stopped
     ports:

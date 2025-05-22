@@ -35,6 +35,7 @@ CREATE TABLE "users" (
   "email" varchar(255) UNIQUE NOT NULL,
   "password_hash" varchar(255) NOT NULL,
   "role_id" bigint NOT NULL,
+  "work_day_id" biginf,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
@@ -65,7 +66,7 @@ CREATE TABLE "events" (
   "location" varchar(255),
   "classroom_id" bigint,
   "is_recurring" boolean NOT NULL DEFAULT false,
-  "recurrence_rule" text,
+  "occurrence_id" bigint,
   "created_by_user_id" bigint NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now()),
@@ -94,13 +95,40 @@ CREATE TABLE "classroom" (
   "name" varchar(255) NOT NULL
 );
 
-COMMENT ON TABLE "events" IS 'Table constraint: end_datetime > start_datetime';
+CREATE TABLE "work_day" (
+  "id" SERIAL PRIMARY KEY,
+  "name" varchar(64) NOT NULL,
+  "start_hour" int NOT NULL,
+  "end_hour" int NOT NULL
+);
+
+CREATE TABLE "event_recurrence_rule" (
+  "id" SERIAL PRIMARY KEY,
+  "start_date" date NOT NULL,
+  "end_date" date NOT NULL,
+  "start_time" time NOT NULL,
+  "end_time" time NOT NULL,
+  "number_occurrences" int NOT NULL,
+  "days" varchar(127) NOT NULL
+);
+
+COMMENT ON TABLE "events" IS 'Table constraint: end_datetime > start_datetime
+';
 
 ALTER TABLE "users" ADD FOREIGN KEY ("role_id") REFERENCES "roles" ("id");
-ALTER TABLE "events" ADD FOREIGN KEY ("event_type_id") REFERENCES "event_types" ("id");
-ALTER TABLE "events" ADD FOREIGN KEY ("classroom_id") REFERENCES "classroom" ("id");
-ALTER TABLE "events" ADD FOREIGN KEY ("created_by_user_id") REFERENCES "users" ("id");
-ALTER TABLE "user_events" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
-ALTER TABLE "user_events" ADD FOREIGN KEY ("event_id") REFERENCES "events" ("id");
-ALTER TABLE "classroom" ADD FOREIGN KEY ("campus_id") REFERENCES "campus" ("id");
 
+ALTER TABLE "users" ADD FOREIGN KEY ("work_day_id") REFERENCES "work_day" ("id");
+
+ALTER TABLE "events" ADD FOREIGN KEY ("event_type_id") REFERENCES "event_types" ("id");
+
+ALTER TABLE "events" ADD FOREIGN KEY ("classroom_id") REFERENCES "classroom" ("id");
+
+ALTER TABLE "events" ADD FOREIGN KEY ("occurrence_id") REFERENCES "event_recurrence_rule" ("id");
+
+ALTER TABLE "events" ADD FOREIGN KEY ("created_by_user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "user_events" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "user_events" ADD FOREIGN KEY ("event_id") REFERENCES "events" ("id");
+
+ALTER TABLE "classroom" ADD FOREIGN KEY ("campus_id") REFERENCES "campus" ("id");
